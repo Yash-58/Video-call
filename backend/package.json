@@ -5,14 +5,20 @@
   "license": "ISC",
   "author": "Yash Chauhan",
   "type": "module",
-  "main": "index.js",
+  "main": "src/app.js",
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
+    "build": "echo 'Backend build complete'",
     "prod": "pm2 src/app.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.1",
     "express": "^5.2.1",
     "http-status": "^2.1.0",
     "mongodb": "^7.5.0",
