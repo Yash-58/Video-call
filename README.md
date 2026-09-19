@@ -4,6 +4,14 @@ Full-stack video calling application built with Node.js, Express, Socket.IO, Web
 
 ---
 
+## 🌐 Live Deployments
+
+- **Frontend (Vercel)**: [https://frontend-h7ew02119-yash-3659.vercel.app](https://frontend-h7ew02119-yash-3659.vercel.app)
+- **Backend (Render)**: [https://video-call-15eg.onrender.com](https://video-call-15eg.onrender.com)
+- **Backend Health Check**: [https://video-call-15eg.onrender.com/health](https://video-call-15eg.onrender.com/health)
+
+---
+
 ## Deploying Backend to Render
 
 You can deploy the backend folder directly to [Render](https://render.com) using either of the two methods below.

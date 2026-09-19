@@ -8,8 +8,12 @@ let timeOnline = {}
 export const connectToSocket = (server) => {
     const io = new Server(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
+            origin: (origin, callback) => {
+                // Allow requests from Vercel frontend, local development, or any client
+                return callback(null, true);
+            },
+            methods: ["GET", "POST"],
+            credentials: true
         }
     });
 

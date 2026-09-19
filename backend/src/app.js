@@ -31,11 +31,15 @@ const io = connectToSocket(server);
 const PORT = process.env.PORT || 8000;
 app.set("port", PORT);
 
-// Enable CORS for all origins
+// Enable CORS for Vercel frontend and other origins
 app.use(cors({
-    origin: "*",
+    origin: (origin, callback) => {
+        // Allow requests from Vercel frontend, local development, or any client
+        callback(null, true);
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["*"]
+    allowedHeaders: ["*"],
+    credentials: true
 }));
 
 app.use(express.json({ limit: "40kb" }));
