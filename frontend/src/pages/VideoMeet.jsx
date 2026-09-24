@@ -59,7 +59,7 @@ export default function VideoMeetComponent() {
     let [audio, setAudio] = useState(true);
     let [screen, setScreen] = useState(false);
     let [showModal, setModal] = useState(false);
-    let [screenAvailable, setScreenAvailable] = useState(false);
+    let [screenAvailable, setScreenAvailable] = useState(true);
     let [messages, setMessages] = useState([]);
     let [message, setMessage] = useState("");
     const savedName = localStorage.getItem("name") || localStorage.getItem("username") || localStorage.getItem("displayName") || "";
@@ -124,11 +124,7 @@ export default function VideoMeetComponent() {
             }
         }
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-            setScreenAvailable(true);
-        } else {
-            setScreenAvailable(false);
-        }
+        setScreenAvailable(true);
     };
 
     useEffect(() => {
@@ -182,52 +178,18 @@ export default function VideoMeetComponent() {
         });
     };
 
-    let getDislayMedia = () => {
-        if (screen) {
-            if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-                navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-                    .then(getDislayMediaSuccess)
-                    .then((stream) => { })
-                    .catch((e) => {
-                        console.log(e);
-                        setScreen(false);
-                    });
+    let stopScreenShare = () => {
+        setScreen(false);
+
+        if (window.localStream) {
+            try {
+                window.localStream.getTracks().forEach(track => track.stop());
+            } catch (e) {
+                console.log(e);
             }
         }
-    };
 
-    let getDislayMediaSuccess = (stream) => {
-        try {
-            window.localStream.getTracks().forEach(track => track.stop());
-        } catch (e) { console.log(e); }
-
-        window.localStream = stream;
-        if (localVideoref.current) {
-            localVideoref.current.srcObject = stream;
-        }
-
-        for (let id in connections) {
-            if (id === socketIdRef.current) continue;
-
-            connections[id].addStream(window.localStream);
-
-            connections[id].createOffer().then((description) => {
-                connections[id].setLocalDescription(description)
-                    .then(() => {
-                        socketRef.current.emit('signal', id, JSON.stringify({ 'sdp': connections[id].localDescription }));
-                    })
-                    .catch(e => console.log(e));
-            });
-        }
-
-        stream.getTracks().forEach(track => track.onended = () => {
-            setScreen(false);
-
-            try {
-                let tracks = localVideoref.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-            } catch (e) { console.log(e); }
-
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then((userMediaStream) => {
                     window.localStream = userMediaStream;
@@ -251,7 +213,63 @@ export default function VideoMeetComponent() {
                         } catch (e) { console.log(e); }
                     }
                 })
-                .catch(e => console.log(e));
+                .catch((e) => {
+                    console.log("Error restoring camera after screen share:", e);
+                });
+        }
+    };
+
+    let getDislayMedia = () => {
+        if (screen) {
+            const getDisplay = (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
+                ? navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
+                : (navigator.getDisplayMedia ? navigator.getDisplayMedia.bind(navigator) : null);
+
+            if (!getDisplay) {
+                alert("Screen sharing is not supported by your mobile browser (such as iOS Safari). On mobile, please use Google Chrome on Android or a desktop browser.");
+                setScreen(false);
+                return;
+            }
+
+            getDisplay({ video: true, audio: true })
+                .then(getDislayMediaSuccess)
+                .catch((e) => {
+                    console.log("Screen share cancelled or failed:", e);
+                    setScreen(false);
+                });
+        }
+    };
+
+    let getDislayMediaSuccess = (stream) => {
+        try {
+            if (window.localStream) {
+                window.localStream.getTracks().forEach(track => track.stop());
+            }
+        } catch (e) { console.log(e); }
+
+        window.localStream = stream;
+        if (localVideoref.current) {
+            localVideoref.current.srcObject = stream;
+        }
+
+        for (let id in connections) {
+            if (id === socketIdRef.current) continue;
+
+            connections[id].addStream(window.localStream);
+
+            connections[id].createOffer().then((description) => {
+                connections[id].setLocalDescription(description)
+                    .then(() => {
+                        socketRef.current.emit('signal', id, JSON.stringify({ 'sdp': connections[id].localDescription }));
+                    })
+                    .catch(e => console.log(e));
+            });
+        }
+
+        stream.getTracks().forEach(track => {
+            track.onended = () => {
+                stopScreenShare();
+            };
         });
     };
 
@@ -262,7 +280,11 @@ export default function VideoMeetComponent() {
     }, [screen]);
 
     let handleScreen = () => {
-        setScreen(!screen);
+        if (screen) {
+            stopScreenShare();
+        } else {
+            setScreen(true);
+        }
     };
 
     let handleEndCall = () => {
@@ -608,16 +630,17 @@ export default function VideoMeetComponent() {
                                         autoPlay 
                                         muted
                                         playsInline
-                                        style={{ display: video ? 'block' : 'none' }}
+                                        className={screen ? styles.screenShareVideo : styles.mirrorVideo}
+                                        style={{ display: (video || screen) ? 'block' : 'none' }}
                                     ></video>
-                                    {!video && (
+                                    {!video && !screen && (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', height: '100%' }}>
                                             <VideocamOffIcon sx={{ fontSize: 56, mb: 1, color: 'rgba(255,255,255,0.4)' }} />
                                             <Typography variant="body2">Camera is Off</Typography>
                                         </div>
                                     )}
                                     <div className={styles.nameTag}>
-                                        You {(!video) && "(Camera Off)"}
+                                        {screen ? "You (Sharing Screen)" : (video ? "You" : "You (Camera Off)")}
                                     </div>
                                 </div>
                                 
@@ -633,6 +656,7 @@ export default function VideoMeetComponent() {
                                             }}
                                             autoPlay
                                             playsInline={vid.playsinline}
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                         />
                                         <div className={styles.nameTag}>
                                             Participant ({vid.socketId.substring(0, 4)})
@@ -676,23 +700,22 @@ export default function VideoMeetComponent() {
                                 </IconButton>
                             </Tooltip>
 
-                            {screenAvailable === true && (
-                                <Tooltip title={screen === true ? "Stop Sharing Screen" : "Share Screen"}>
-                                    <IconButton 
-                                        onClick={handleScreen} 
-                                        sx={{ 
-                                            color: 'white', 
-                                            bgcolor: screen === true ? 'rgba(255, 152, 57, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                                            p: 1.5,
-                                            '&:hover': {
-                                                bgcolor: screen === true ? 'rgba(255, 152, 57, 0.3)' : 'rgba(255, 255, 255, 0.2)'
-                                            }
-                                        }}
-                                    >
-                                        {screen === true ? <ScreenShareIcon /> : <StopScreenShareIcon />}
-                                    </IconButton>
-                                </Tooltip>
-                            )}
+                            <Tooltip title={screen === true ? "Stop Sharing Screen" : "Share Screen"}>
+                                <IconButton 
+                                    onClick={handleScreen} 
+                                    sx={{ 
+                                        color: 'white', 
+                                        bgcolor: screen === true ? 'rgba(255, 152, 57, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                                        p: 1.5,
+                                        border: screen === true ? '1px solid #FF9839' : '1px solid transparent',
+                                        '&:hover': {
+                                            bgcolor: screen === true ? 'rgba(255, 152, 57, 0.4)' : 'rgba(255, 255, 255, 0.2)'
+                                        }
+                                    }}
+                                >
+                                    {screen === true ? <StopScreenShareIcon sx={{ color: '#FF9839' }} /> : <ScreenShareIcon />}
+                                </IconButton>
+                            </Tooltip>
 
                             <Tooltip title="Toggle Chat">
                                 <Badge badgeContent={newMessages} max={99} color="primary">
