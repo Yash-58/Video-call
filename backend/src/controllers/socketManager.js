@@ -5,6 +5,19 @@ let connections = {}
 let messages = {}
 let timeOnline = {}
 
+const normalizeRoom = (rawPath) => {
+    if (!rawPath) return "default";
+    try {
+        if (typeof rawPath === "string" && (rawPath.startsWith("http://") || rawPath.startsWith("https://"))) {
+            const parsed = new URL(rawPath);
+            return parsed.pathname.replace(/^\/+|\/+$/g, "").toLowerCase() || "default";
+        }
+        return String(rawPath).replace(/^\/+|\/+$/g, "").toLowerCase() || "default";
+    } catch {
+        return String(rawPath).trim().toLowerCase() || "default";
+    }
+};
+
 export const connectToSocket = (server) => {
     const io = new Server(server, {
         cors: {
@@ -22,7 +35,8 @@ export const connectToSocket = (server) => {
 
         console.log("SOMETHING CONNECTED")
 
-        socket.on("join-call", (path) => {
+        socket.on("join-call", (rawPath) => {
+            const path = normalizeRoom(rawPath);
 
             if (connections[path] === undefined) {
                 connections[path] = []

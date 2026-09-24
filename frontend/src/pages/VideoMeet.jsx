@@ -21,7 +21,11 @@ var connections = {};
 
 const peerConfigConnections = {
     "iceServers": [
-        { "urls": "stun:stun.l.google.com:19302" }
+        { "urls": "stun:stun.l.google.com:19302" },
+        { "urls": "stun:stun1.l.google.com:19302" },
+        { "urls": "stun:stun2.l.google.com:19302" },
+        { "urls": "stun:stun3.l.google.com:19302" },
+        { "urls": "stun:stun4.l.google.com:19302" }
     ]
 };
 
@@ -66,6 +70,14 @@ export default function VideoMeetComponent() {
 
     const getPermissions = async () => {
         try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn("navigator.mediaDevices is not available. Please ensure the app is opened via HTTPS or localhost.");
+                setVideoAvailable(false);
+                setAudioAvailable(false);
+                setVideo(false);
+                setAudio(false);
+                return;
+            }
             const userMediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             if (userMediaStream) {
                 window.localStream = userMediaStream;
@@ -307,12 +319,16 @@ export default function VideoMeetComponent() {
     };
 
     let connectToSocketServer = () => {
-        socketRef.current = io.connect(server_url, { secure: false });
+        socketRef.current = io(server_url, {
+            transports: ["websocket", "polling"],
+            secure: typeof server_url === "string" && server_url.startsWith("https")
+        });
 
         socketRef.current.on('signal', gotMessageFromServer);
 
         socketRef.current.on('connect', () => {
-            socketRef.current.emit('join-call', window.location.href);
+            const roomName = window.location.pathname.replace(/^\/+|\/+$/g, '') || "default";
+            socketRef.current.emit('join-call', roomName);
             socketIdRef.current = socketRef.current.id;
 
             socketRef.current.on('chat-message', addMessage);

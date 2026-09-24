@@ -12,6 +12,20 @@ Full-stack video calling application built with Node.js, Express, Socket.IO, Web
 
 ---
 
+## 🔓 How to Make Frontend Accessible on Every Device / System
+
+If other users or devices see a **"Log in to Vercel"** screen when opening your website:
+
+1. Open your **[Vercel Dashboard](https://vercel.com/dashboard)**.
+2. Select your frontend project (e.g. `frontend`).
+3. Go to **Settings** -> **Deployment Protection**.
+4. Under **Vercel Authentication**, toggle it **Disabled** (Turn OFF Vercel Authentication).
+5. Click **Save**.
+
+Now anyone on any laptop, phone, or browser can immediately open and use your video calling application without signing up for Vercel!
+
+---
+
 ## Deploying Backend to Render
 
 You can deploy the backend folder directly to [Render](https://render.com) using either of the two methods below.
@@ -55,7 +69,7 @@ For Render to connect to MongoDB Atlas:
 
 ## Local Development
 
-### Backend Setup
+### 1. Backend Setup
 ```bash
 cd backend
 npm install
@@ -63,6 +77,15 @@ npm run dev
 ```
 
 The backend server will run on `http://localhost:8000`.
+
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The frontend will run on `http://localhost:3000`.
 
 ### Health Check
 Once running, you can verify backend health:
