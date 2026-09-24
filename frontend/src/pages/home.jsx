@@ -33,11 +33,16 @@ function HomeComponent() {
     const [meetingCode, setMeetingCode] = useState("");
     const [copySuccess, setCopySuccess] = useState(false);
 
-    const { addToUserHistory } = useContext(AuthContext);
+    const { addToUserHistory, handleLogout, userData } = useContext(AuthContext);
+    const displayName = userData?.name || userData?.username || localStorage.getItem("name") || localStorage.getItem("username") || "";
 
     let handleJoinVideoCall = async () => {
         if (!meetingCode.trim()) return;
-        await addToUserHistory(meetingCode);
+        try {
+            await addToUserHistory(meetingCode);
+        } catch (e) {
+            console.warn("Could not save to history:", e);
+        }
         navigate(`/${meetingCode}`);
     };
 
@@ -72,12 +77,18 @@ function HomeComponent() {
                             </Box>
 
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                {displayName && (
+                                    <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
+                                        Hi, {displayName}
+                                    </Typography>
+                                )}
+
                                 <Button 
                                     startIcon={<RestoreIcon />}
                                     onClick={() => navigate("/history")}
                                     sx={{ 
                                         color: 'text.secondary', 
-                                        textTransform: 'none',
+                                        textTransform: 'none', 
                                         fontSize: '0.95rem',
                                         '&:hover': { color: 'primary.main', bgcolor: 'rgba(255,152,57,0.04)' }
                                     }}
@@ -91,10 +102,7 @@ function HomeComponent() {
                                     variant="outlined"
                                     color="error"
                                     startIcon={<LogoutIcon />}
-                                    onClick={() => {
-                                        localStorage.removeItem("token");
-                                        navigate("/auth");
-                                    }}
+                                    onClick={handleLogout}
                                     sx={{ 
                                         borderRadius: '20px',
                                         textTransform: 'none',

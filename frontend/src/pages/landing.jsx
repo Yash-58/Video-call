@@ -6,6 +6,19 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 export default function LandingPage() {
     const router = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsLoggedIn(Boolean(localStorage.getItem("token")));
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("name");
+        localStorage.removeItem("displayName");
+        setIsLoggedIn(false);
+    };
 
     return (
         <Box 
@@ -76,46 +89,86 @@ export default function LandingPage() {
                                 Join as Guest
                             </Button>
                             
-                            <Button 
-                                variant="outlined"
-                                onClick={() => router("/auth", { state: { formState: 1 } })}
-                                sx={{ 
-                                    color: '#FF9839', 
-                                    borderColor: 'rgba(255, 152, 57, 0.4)',
-                                    borderRadius: '24px',
-                                    textTransform: 'none',
-                                    px: 2.5,
-                                    fontSize: '0.95rem',
-                                    fontWeight: '600',
-                                    '&:hover': { 
-                                        borderColor: '#FF9839', 
-                                        bgcolor: 'rgba(255, 152, 57, 0.04)' 
-                                    }
-                                }}
-                            >
-                                Register
-                            </Button>
+                            {isLoggedIn ? (
+                                <>
+                                    <Button 
+                                        variant="contained"
+                                        onClick={() => router("/home")}
+                                        sx={{ 
+                                            bgcolor: '#FF9839', 
+                                            color: 'white',
+                                            borderRadius: '24px',
+                                            textTransform: 'none',
+                                            px: 3,
+                                            fontSize: '0.95rem',
+                                            fontWeight: '600',
+                                            boxShadow: '0 4px 12px rgba(255, 152, 57, 0.25)',
+                                            '&:hover': { 
+                                                bgcolor: '#D97500',
+                                                boxShadow: '0 6px 16px rgba(255, 152, 57, 0.35)'
+                                            }
+                                        }}
+                                    >
+                                        Dashboard
+                                    </Button>
+                                    <Button 
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={handleLogout}
+                                        sx={{ 
+                                            borderRadius: '24px',
+                                            textTransform: 'none',
+                                            px: 2.5,
+                                            fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        Logout
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button 
+                                        variant="outlined"
+                                        onClick={() => router("/auth", { state: { formState: 1 } })}
+                                        sx={{ 
+                                            color: '#FF9839', 
+                                            borderColor: 'rgba(255, 152, 57, 0.4)',
+                                            borderRadius: '24px',
+                                            textTransform: 'none',
+                                            px: 2.5,
+                                            fontSize: '0.95rem',
+                                            fontWeight: '600',
+                                            '&:hover': { 
+                                                borderColor: '#FF9839', 
+                                                bgcolor: 'rgba(255, 152, 57, 0.04)' 
+                                            }
+                                        }}
+                                    >
+                                        Register
+                                    </Button>
 
-                            <Button 
-                                variant="contained"
-                                onClick={() => router("/auth", { state: { formState: 0 } })}
-                                sx={{ 
-                                    bgcolor: '#FF9839', 
-                                    color: '#white',
-                                    borderRadius: '24px',
-                                    textTransform: 'none',
-                                    px: 3,
-                                    fontSize: '0.95rem',
-                                    fontWeight: '600',
-                                    boxShadow: '0 4px 12px rgba(255, 152, 57, 0.25)',
-                                    '&:hover': { 
-                                        bgcolor: '#D97500',
-                                        boxShadow: '0 6px 16px rgba(255, 152, 57, 0.35)'
-                                    }
-                                }}
-                            >
-                                Login
-                            </Button>
+                                    <Button 
+                                        variant="contained"
+                                        onClick={() => router("/auth", { state: { formState: 0 } })}
+                                        sx={{ 
+                                            bgcolor: '#FF9839', 
+                                            color: 'white',
+                                            borderRadius: '24px',
+                                            textTransform: 'none',
+                                            px: 3,
+                                            fontSize: '0.95rem',
+                                            fontWeight: '600',
+                                            boxShadow: '0 4px 12px rgba(255, 152, 57, 0.25)',
+                                            '&:hover': { 
+                                                bgcolor: '#D97500',
+                                                boxShadow: '0 6px 16px rgba(255, 152, 57, 0.35)'
+                                            }
+                                        }}
+                                    >
+                                        Login
+                                    </Button>
+                                </>
+                            )}
                         </Box>
                     </Toolbar>
                 </Container>
@@ -160,8 +213,8 @@ export default function LandingPage() {
 
                             <Button 
                                 component={Link}
-                                to="/auth"
-                                state={{ formState: 1 }}
+                                to={isLoggedIn ? "/home" : "/auth"}
+                                state={isLoggedIn ? undefined : { formState: 1 }}
                                 variant="contained"
                                 endIcon={<KeyboardArrowRightIcon />}
                                 sx={{ 
@@ -182,7 +235,7 @@ export default function LandingPage() {
                                     }
                                 }}
                             >
-                                Get Started
+                                {isLoggedIn ? "Go to Dashboard" : "Get Started"}
                             </Button>
                         </Box>
                     </Grid>

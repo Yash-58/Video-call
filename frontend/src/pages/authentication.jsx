@@ -13,8 +13,7 @@ import { Snackbar } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Icons
 import {
@@ -82,6 +81,13 @@ export default function Authentication() {
     const [showPassword, setShowPassword] = React.useState(false);
 
     const location = useLocation();
+    const router = useNavigate();
+
+    React.useEffect(() => {
+        if (localStorage.getItem("token")) {
+            router("/home");
+        }
+    }, [router]);
 
     React.useEffect(() => {
         if (location.state && typeof location.state.formState === 'number') {
@@ -107,15 +113,7 @@ export default function Authentication() {
                 await handleLogin(username, password);
             }
             if (formState === 1) {
-                let result = await handleRegister(name, username, password);
-                console.log(result);
-                setName("");
-                setUsername("");
-                setPassword("");
-                setMessage(result);
-                setOpen(true);
-                setError("");
-                setFormState(0);
+                await handleRegister(name, username, password);
             }
         } catch (err) {
             console.log(err);

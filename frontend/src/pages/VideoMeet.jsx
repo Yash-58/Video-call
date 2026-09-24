@@ -62,9 +62,9 @@ export default function VideoMeetComponent() {
     let [screenAvailable, setScreenAvailable] = useState(false);
     let [messages, setMessages] = useState([]);
     let [message, setMessage] = useState("");
-    let [newMessages, setNewMessages] = useState(0);
+    const savedName = localStorage.getItem("name") || localStorage.getItem("username") || localStorage.getItem("displayName") || "";
     let [askForUsername, setAskForUsername] = useState(true);
-    let [username, setUsername] = useState("");
+    let [username, setUsername] = useState(savedName);
     const videoRef = useRef([]);
     let [videos, setVideos] = useState([]);
 
@@ -277,7 +277,11 @@ export default function VideoMeetComponent() {
                 window.localStream.getTracks().forEach(track => track.stop());
             } catch (e) { }
         }
-        window.location.href = "/";
+        if (localStorage.getItem("token")) {
+            window.location.href = "/home";
+        } else {
+            window.location.href = "/";
+        }
     };
 
     let silence = () => {
@@ -405,6 +409,9 @@ export default function VideoMeetComponent() {
     };
 
     let connect = () => {
+        if (username.trim()) {
+            localStorage.setItem("displayName", username.trim());
+        }
         setAskForUsername(false);
         getMedia();
     };
